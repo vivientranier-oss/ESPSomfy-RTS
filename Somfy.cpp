@@ -4724,6 +4724,19 @@ bool Transceiver::end() {
     this->disableReceive();
     return true;
 }
+
+void Transceiver::fanOff() {
+    byte frame[3] = { 0xF3, 0xFC, 0x1F };
+    sendFrame(frame, 2, 24);
+}
+void Transceiver::fanPlusOut() {
+    byte frame[3] = { 0xF5, 0xB0, 0x05 };
+    sendFrame(frame, 2, 24);
+}
+void Transceiver::fanMinusOut() {
+    byte frame[3] = { 0xF3, 0xFD, 0x17 };
+    sendFrame(frame, 2, 24);
+}
 void transceiver_config_t::fromJSON(JsonObject& obj) {
     //Serial.print("Deserialize Radio JSON ");
     if(obj.containsKey("type")) this->type = obj["type"];

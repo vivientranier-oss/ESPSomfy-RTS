@@ -183,6 +183,19 @@ void MQTTClass::receive(const char *topic, byte*payload, uint32_t length) {
       }
     }
   }
+  else if(strncmp(entityType, "fan", sizeof(entityType)) == 0) {
+    // On n'utilise pas entityId ici mais tu peux gérer plusieurs fans si tu veux
+    String cmd = String(value);
+    if(cmd == "OFF") {
+        somfy.transceiver.fanOff();
+    }
+    else if(cmd == "+OUT") {
+        somfy.transceiver.fanPlusOut();
+    }
+    else if(cmd == "-OUT") {
+        somfy.transceiver.fanMinusOut();
+    }
+}
   esp_task_wdt_reset(); // Make sure we do not reboot here.
 }
 bool MQTTClass::connect() {

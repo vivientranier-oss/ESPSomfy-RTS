@@ -240,6 +240,7 @@ bool MQTTClass::connect() {
         this->subscribe("groups/+/sunFlag/set");
         this->subscribe("groups/+/sunny/set");
         this->subscribe("groups/+/windy/set");
+        this->subscribe("fan/set");
         mqttClient.setCallback(MQTTClass::receive);
         Serial.println("MQTT Startup Completed");
         esp_task_wdt_reset();

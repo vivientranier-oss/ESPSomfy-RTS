@@ -690,8 +690,13 @@ bool Fan::publishDiscovery() {
   device["model"] = "2BAY6-P-SERIES";
   device["manufacturer"] = "noname";
 
-  return mqtt.publishDisco("homeassistant/fan/fan_1/config", doc, true);
+  return mqtt.publishDisco(
+      "homeassistant/fan/fan_1/config",
+      doc.as<JsonObject>(),
+      true
+  );
 }
+
 
 void Fan::sendCommand(const char *command) {
   // Sauvegarde les paramètres actuels du transceiver

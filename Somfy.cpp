@@ -639,7 +639,7 @@ void SomfyShadeController::writeBackup() {
   file.end();
 }
 
-SomfyFan *SomfyShadeController::addFan(const char *name, uint32_t fanAddress) {
+Fan *SomfyShadeController::addFan(const char *name, uint32_t fanAddress) {
   for (uint8_t i = 0; i < SOMFY_MAX_FANS; i++) {
     if (fans[i].id == 0) {  // Trouve un emplacement libre
       fans[i].id = i + 1;
@@ -651,7 +651,7 @@ SomfyFan *SomfyShadeController::addFan(const char *name, uint32_t fanAddress) {
   return nullptr;  // Plus de place
 }
 
-SomfyFan *SomfyShadeController::getFanById(uint8_t fanId) {
+Fan *SomfyShadeController::getFanById(uint8_t fanId) {
   for (uint8_t i = 0; i < SOMFY_MAX_FANS; i++) {
     if (fans[i].id == fanId) {
       return &fans[i];
@@ -660,51 +660,68 @@ SomfyFan *SomfyShadeController::getFanById(uint8_t fanId) {
   return nullptr;
 }
 
-Fan::publishDiscovery() {
-  StaticJsonDocument<256> doc;
+bool Fan::publishDiscovery() {
+
+  StaticJsonDocument<384> doc;
+
+  // Basic fields
   doc["name"] = name;
-  doc["unique_id"] = String("fan_") + id;
-  doc["command_topic"] = String("fan/") + id + "/set";
-  doc["speed_command_topic"] = String("fan/") + id + "/set";
-  doc["speeds"] = (const char*[]){"off", "+OUT", "-OUT"};
+
+  char unique_id[20];
+  snprintf(unique_id, sizeof(unique_id), "fan_%u", id);
+  doc["unique_id"] = unique_id;
+
+  char topic[40];
+  snprintf(topic, sizeof(topic), "fan/%u/set", id);
+  doc["command_topic"] = topic;
+  doc["speed_command_topic"] = topic;
+
   doc["payload_off"] = "OFF";
-  doc["device"] = (JsonObject) {
-    {"identifiers", "somfy_controller"},
-    {"name", "2BAY6-P-SERIES"},
-    {"model", "2BAY6-P-SERIES"},
-    {"manufacturer", "noname"}
-  };
+
+  // speeds array
+  JsonArray speeds = doc.createNestedArray("speeds");
+  speeds.add("off");
+  speeds.add("+OUT");
+  speeds.add("-OUT");
+
+  // device object
+  JsonObject device = doc.createNestedObject("device");
+  device["identifiers"] = "somfy_controller";
+  device["name"] = "2BAY6-P-SERIES";
+  device["model"] = "2BAY6-P-SERIES";
+  device["manufacturer"] = "noname";
+
   return mqtt.publishDisco("homeassistant/fan/fan_1/config", doc, true);
 }
 
-void SomfyFan::sendCommand(const char *command) {
+void Fan::sendCommand(const char *command) {
   // Sauvegarde les paramètres actuels du transceiver
-  float oldFrequency = transceiver.config.frequency;
-  uint8_t oldBitLength = transceiver.config.type;  // 56 ou 80 bits
+  float oldFrequency = somfy.transceiver.config.frequency;
+  uint8_t oldBitLength = somfy.transceiver.config.type;  // 56 ou 80 bits
 
   // Configure le transceiver pour le fan
-  transceiver.config.frequency = frequency;
-  transceiver.config.type = bitLength;  // 24 bits pour le fan
+  somfy.transceiver.config.frequency = 433.92;
+  somfy.transceiver.config.type = 24;  // 24 bits pour le fan
 
   // Envoie la commande
   if (strcmp(command, "OFF") == 0) {
-    transceiver.fanOff();
+    somfy.transceiver.fanOff();
   }
   else if (strcmp(command, "+OUT") == 0) {
-    transceiver.fanPlusOut();
+    somfy.transceiver.fanPlusOut();
   }
   else if (strcmp(command, "-OUT") == 0) {
-    transceiver.fanMinusOut();
+    somfy.transceiver.fanMinusOut();
   }
 
   // Restaure les paramètres d'origine
-  transceiver.config.frequency = oldFrequency;
-  transceiver.config.type = oldBitLength;
-  transceiver.apply();  // Applique les anciens paramètres
+  somfy.transceiver.config.frequency = oldFrequency;
+  somfy.transceiver.config.type = oldBitLength;
+  somfy.transceiver.apply();  // Applique les anciens paramètres
 }
 
 void SomfyShadeController::sendFanCommand(uint8_t fanId, const char *command) {
-  SomfyFan *fan = getFanById(fanId);
+  Fan *fan = getFanById(fanId);
   if (fan) {
     fan->sendCommand(command);
   }

@@ -422,22 +422,7 @@ class Fan {
   public:
     uint8_t id = 0;
     char name[21] = "Extracteur";
-    bool publishDiscovery() {
-      StaticJsonDocument<256> doc;
-      doc["name"] = name;
-      doc["unique_id"] = String("fan_") + id;
-      doc["command_topic"] = String("fan/") + id + "/set";
-      doc["speed_command_topic"] = String("fan/") + id + "/set";
-      doc["speeds"] = (const char*[]){"off", "+OUT", "-OUT"};
-      doc["payload_off"] = "OFF";
-      doc["device"] = (JsonObject) {
-        {"identifiers", "somfy_controller"},
-        {"name", "2BAY6-P-SERIES"},
-        {"model", "2BAY6-P-SERIES"},
-        {"manufacturer", "noname"}
-      };
-      return mqtt.publishDisco("homeassistant/fan/fan_1/config", doc, true);
-    }
+    bool publishDiscovery();
 };
 struct transceiver_config_t {
     bool printBuffer = false;

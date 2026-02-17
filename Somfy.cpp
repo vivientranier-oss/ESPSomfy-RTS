@@ -660,6 +660,23 @@ SomfyFan *SomfyShadeController::getFanById(uint8_t fanId) {
   return nullptr;
 }
 
+Fan::publishDiscovery() {
+  StaticJsonDocument<256> doc;
+  doc["name"] = name;
+  doc["unique_id"] = String("fan_") + id;
+  doc["command_topic"] = String("fan/") + id + "/set";
+  doc["speed_command_topic"] = String("fan/") + id + "/set";
+  doc["speeds"] = (const char*[]){"off", "+OUT", "-OUT"};
+  doc["payload_off"] = "OFF";
+  doc["device"] = (JsonObject) {
+    {"identifiers", "somfy_controller"},
+    {"name", "2BAY6-P-SERIES"},
+    {"model", "2BAY6-P-SERIES"},
+    {"manufacturer", "noname"}
+  };
+  return mqtt.publishDisco("homeassistant/fan/fan_1/config", doc, true);
+}
+
 void SomfyFan::sendCommand(const char *command) {
   // Sauvegarde les paramètres actuels du transceiver
   float oldFrequency = transceiver.config.frequency;

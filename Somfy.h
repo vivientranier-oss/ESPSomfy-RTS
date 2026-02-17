@@ -417,6 +417,27 @@ class SomfyGroup : public SomfyRemote {
     bool publish(const char *topic, uint16_t val, bool retain = false);
     bool publish(const char *topic, bool val, bool retain = false);
 };
+class Fan {
+  public:
+    uint8_t id = 0;
+    char name[21] = "Extracteur";
+    bool publishDiscovery() {
+      StaticJsonDocument<256> doc;
+      doc["name"] = name;
+      doc["unique_id"] = String("fan_") + id;
+      doc["command_topic"] = String("fan/") + id + "/set";
+      doc["speed_command_topic"] = String("fan/") + id + "/set";
+      doc["speeds"] = (const char*[]){"off", "+OUT", "-OUT"};
+      doc["payload_off"] = "OFF";
+      doc["device"] = (JsonObject) {
+        {"identifiers", "somfy_controller"},
+        {"name", "2BAY6-P-SERIES"},
+        {"model", "2BAY6-P-SERIES"},
+        {"manufacturer", "noname"}
+      };
+      return mqtt.publishDisco("homeassistant/fan/fan_1/config", doc, true);
+    }
+};
 struct transceiver_config_t {
     bool printBuffer = false;
     bool enabled = false;
@@ -529,7 +550,12 @@ class SomfyShadeController {
   protected:
     uint8_t m_shadeIds[SOMFY_MAX_SHADES];
     uint32_t lastCommit = 0;
+    Fan fans[SOMFY_MAX_FANS];  // Tableau de fans
   public:
+    Fan *addFan(const char *name, uint32_t address);
+    Fan *getFanById(uint8_t fanId);
+    void publishFans();
+    void sendFanCommand(uint8_t fanId, const char *command);
     bool useNVS();
     bool isDirty = false;
     uint32_t startingAddress;

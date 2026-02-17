@@ -661,41 +661,69 @@ Fan *SomfyShadeController::getFanById(uint8_t fanId) {
 
 bool Fan::publishDiscovery() {
 
-  StaticJsonDocument<384> doc;
+  if(!mqtt.connected() || !settings.MQTT.pubDisco) return false;
 
-  // Basic fields
-  doc["name"] = name;
+  char topic[128] = "";
+  DynamicJsonDocument doc(512);
+  JsonObject obj = doc.to<JsonObject>();
 
-  char unique_id[20];
-  snprintf(unique_id, sizeof(unique_id), "fan_%u", id);
-  doc["unique_id"] = unique_id;
+  // Root topic (~)
+  snprintf(topic, sizeof(topic), "%s/fan/%d",
+           settings.MQTT.rootTopic, this->id);
+  obj["~"] = topic;
 
-  char topic[40];
-  snprintf(topic, sizeof(topic), "fan/%u/set", id);
-  doc["command_topic"] = topic;
-  doc["speed_command_topic"] = topic;
+  // Availability
+  snprintf(topic, sizeof(topic), "%s/status",
+           settings.MQTT.rootTopic);
+  obj["availability_topic"] = topic;
+  obj["payload_available"] = "online";
+  obj["payload_not_available"] = "offline";
 
-  doc["payload_off"] = "OFF";
+  // Name
+  obj["name"] = this->name;
 
-  // speeds array
-  JsonArray speeds = doc.createNestedArray("speeds");
+  // Unique ID
+  snprintf(topic, sizeof(topic),
+           "mqtt_%s_fan%d",
+           settings.serverId,
+           this->id);
+  obj["unique_id"] = topic;
+
+  // Command topic
+  obj["command_topic"] = "~/set";
+
+  // Payloads
+  obj["payload_off"] = "OFF";
+
+  // Speeds
+  JsonArray speeds = obj.createNestedArray("speeds");
   speeds.add("off");
   speeds.add("+OUT");
   speeds.add("-OUT");
 
-  // device object
-  JsonObject device = doc.createNestedObject("device");
-  device["identifiers"] = "somfy_controller";
-  device["name"] = "2BAY6-P-SERIES";
-  device["model"] = "2BAY6-P-SERIES";
-  device["manufacturer"] = "noname";
+  // Device block
+  JsonObject dobj = obj.createNestedObject("device");
+  dobj["name"] = settings.hostname;
+  dobj["mf"] = "rstrouse";
+  dobj["model"] = "ESPSomfy-RTS MQTT";
 
-  return mqtt.publishDisco(
-      "homeassistant/fan/fan_1/config",
-      doc.as<JsonObject>(),
-      true
-  );
+  JsonArray arrids = dobj.createNestedArray("identifiers");
+  snprintf(topic, sizeof(topic),
+           "mqtt_espsomfyrts_%s",
+           settings.serverId);
+  arrids.add(topic);
+
+  dobj["via_device"] = topic;
+
+  // Discovery topic
+  snprintf(topic, sizeof(topic),
+           "%s/fan/%d/config",
+           settings.MQTT.discoTopic,
+           this->id);
+
+  return mqtt.publishDisco(topic, obj, true);
 }
+
 
 
 void Fan::sendCommand(const char *command) {

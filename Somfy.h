@@ -3,6 +3,7 @@
 #include "ConfigSettings.h"
 #include "WResp.h"
 
+#define SOMFY_MAX_FANS 4
 #define SOMFY_MAX_SHADES 32
 #define SOMFY_MAX_GROUPS 16
 #define SOMFY_MAX_LINKED_REMOTES 7

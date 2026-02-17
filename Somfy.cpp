@@ -644,7 +644,6 @@ Fan *SomfyShadeController::addFan(const char *name, uint32_t fanAddress) {
     if (fans[i].id == 0) {  // Trouve un emplacement libre
       fans[i].id = i + 1;
       strncpy(fans[i].name, name, sizeof(fans[i].name));
-      fans[i].address = fanAddress;
       return &fans[i];
     }
   }
@@ -717,7 +716,7 @@ void Fan::sendCommand(const char *command) {
   // Restaure les paramètres d'origine
   somfy.transceiver.config.frequency = oldFrequency;
   somfy.transceiver.config.type = oldBitLength;
-  somfy.transceiver.apply();  // Applique les anciens paramètres
+  somfy.transceiver.config.apply();  // Applique les anciens paramètres
 }
 
 void SomfyShadeController::sendFanCommand(uint8_t fanId, const char *command) {

@@ -638,6 +638,69 @@ void SomfyShadeController::writeBackup() {
   file.backup(this);
   file.end();
 }
+
+SomfyFan *SomfyShadeController::addFan(const char *name, uint32_t fanAddress) {
+  for (uint8_t i = 0; i < SOMFY_MAX_FANS; i++) {
+    if (fans[i].id == 0) {  // Trouve un emplacement libre
+      fans[i].id = i + 1;
+      strncpy(fans[i].name, name, sizeof(fans[i].name));
+      fans[i].address = fanAddress;
+      return &fans[i];
+    }
+  }
+  return nullptr;  // Plus de place
+}
+
+SomfyFan *SomfyShadeController::getFanById(uint8_t fanId) {
+  for (uint8_t i = 0; i < SOMFY_MAX_FANS; i++) {
+    if (fans[i].id == fanId) {
+      return &fans[i];
+    }
+  }
+  return nullptr;
+}
+
+void SomfyFan::sendCommand(const char *command) {
+  // Sauvegarde les paramètres actuels du transceiver
+  float oldFrequency = transceiver.config.frequency;
+  uint8_t oldBitLength = transceiver.config.type;  // 56 ou 80 bits
+
+  // Configure le transceiver pour le fan
+  transceiver.config.frequency = frequency;
+  transceiver.config.type = bitLength;  // 24 bits pour le fan
+
+  // Envoie la commande
+  if (strcmp(command, "OFF") == 0) {
+    transceiver.fanOff();
+  }
+  else if (strcmp(command, "+OUT") == 0) {
+    transceiver.fanPlusOut();
+  }
+  else if (strcmp(command, "-OUT") == 0) {
+    transceiver.fanMinusOut();
+  }
+
+  // Restaure les paramètres d'origine
+  transceiver.config.frequency = oldFrequency;
+  transceiver.config.type = oldBitLength;
+  transceiver.apply();  // Applique les anciens paramètres
+}
+
+void SomfyShadeController::sendFanCommand(uint8_t fanId, const char *command) {
+  SomfyFan *fan = getFanById(fanId);
+  if (fan) {
+    fan->sendCommand(command);
+  }
+}
+
+void SomfyShadeController::publishFans() {
+  for (uint8_t i = 0; i < SOMFY_MAX_FANS; i++) {
+    if (fans[i].id != 0) {
+      fans[i].publishDiscovery();
+    }
+  }
+}
+
 SomfyRoom * SomfyShadeController::getRoomById(uint8_t roomId) {
   for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {
     if(this->rooms[i].roomId == roomId) return &this->rooms[i];

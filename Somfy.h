@@ -423,6 +423,7 @@ class Fan {
     uint8_t id = 0;
     char name[21] = "Extracteur";
     bool publishDiscovery();
+    void sendCommand(const char *command);
 };
 struct transceiver_config_t {
     bool printBuffer = false;

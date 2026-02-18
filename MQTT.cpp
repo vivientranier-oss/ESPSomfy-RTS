@@ -225,6 +225,7 @@ bool MQTTClass::connect() {
         this->publish("firmware", settings.fwVersion.name, true);
         this->publish("serverId", settings.serverId, true);
         this->publish("mac", net.mac.c_str());
+        somfy.publishFans();  // Publie les fans via MQTT Discovery
         somfy.publish();
         this->subscribe("shades/+/target/set");
         this->subscribe("shades/+/tiltTarget/set");

@@ -37,7 +37,7 @@ void setup() {
   delay(1000);
   net.setup();  
   somfy.begin();
-  somfy.addFan("Extracteur_cuisine");
+  somfy.setupFan("Extracteur_cuisine");
   //git.checkForUpdate();
   esp_task_wdt_init(7, true); //enable panic so ESP32 restarts
   esp_task_wdt_add(NULL); //add current thread to WDT watch

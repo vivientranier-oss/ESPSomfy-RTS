@@ -540,9 +540,8 @@ class SomfyShadeController {
     Fan extracteurCuisine;
   public:
     void setupFan(const char *name);
-    Fan *getFanById(uint8_t fanId);
     void publishFanDiscovery();
-    void sendFanCommand(uint8_t fanId, const char *command);
+    void sendFanCommand(const char *command);
     bool useNVS();
     bool isDirty = false;
     uint32_t startingAddress;

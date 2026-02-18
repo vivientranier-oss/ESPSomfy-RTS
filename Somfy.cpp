@@ -645,14 +645,6 @@ void SomfyShadeController::setupFan(const char *name) {
   extracteurCuisine.id = 1; // ID fixe
 }
 
-Fan *SomfyShadeController::getFanById(uint8_t fanId) {
-  for (uint8_t i = 0; i < SOMFY_MAX_FANS; i++) {
-    if (fans[i].id == fanId) {
-      return &fans[i];
-    }
-  }
-  return nullptr;
-}
 
 bool Fan::publishDiscovery() {
     if(!mqtt.connected() || !settings.MQTT.pubDisco) return false;

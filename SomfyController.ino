@@ -23,6 +23,7 @@ uint32_t oldheap = 0;
 void setup() {
   Serial.begin(115200);
   Serial.println();
+  Serial.println("Vivien custom version");
   Serial.println("Startup/Boot....");
   Serial.println("Mounting File System...");
   if(LittleFS.begin()) Serial.println("File system mounted successfully");

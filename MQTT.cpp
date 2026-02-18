@@ -315,6 +315,7 @@ bool MQTTClass::publish(const char *topic, const char *payload, bool retain) {
       snprintf(top, sizeof(top), "%s/%s", settings.MQTT.rootTopic, topic);
     else
       strlcpy(top, topic, sizeof(top));
+    Serial.print("publish "); Serial.println(topic);
     esp_task_wdt_reset(); // Make sure we do not reboot here.
     mqttClient.publish(top, payload, retain);
     return true;

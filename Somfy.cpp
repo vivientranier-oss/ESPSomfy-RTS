@@ -640,6 +640,7 @@ void SomfyShadeController::writeBackup() {
 }
 
 Fan *SomfyShadeController::addFan(const char *name) {
+  Serial.println("SomfyShadeController::addFan")
   for (uint8_t i = 0; i < SOMFY_MAX_FANS; i++) {
     if (fans[i].id == 0) {  // Trouve un emplacement libre
       fans[i].id = i + 1;

@@ -261,6 +261,12 @@ bool MQTTClass::connect() {
     else
       return true;
   }
+
+  Serial.print("Connexion au broker MQTT : ");
+  Serial.print(settings.MQTT.hostname);
+  Serial.print(":");
+  Serial.println(settings.MQTT.port);
+
   return true;
 }
 bool MQTTClass::disconnect() {

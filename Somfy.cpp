@@ -705,6 +705,7 @@ void Fan::sendCommand(const char *command) {
   // Configure le transceiver pour le fan
   somfy.transceiver.config.frequency = 433.92;
   somfy.transceiver.config.type = 24;  // 24 bits pour le fan
+  somfy.transceiver.config.apply();  // applique de nouveau parametres
 
   // Envoie la commande
   if (strcmp(command, "OFF") == 0) {

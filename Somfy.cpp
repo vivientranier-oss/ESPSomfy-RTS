@@ -1596,6 +1596,8 @@ void SomfyShade::publishState() {
   }
 }
 void SomfyShade::publishDisco() {
+
+  Serial.println("SomfyShade::publishDisco()");
   if(!mqtt.connected() || !settings.MQTT.pubDisco) return;
   char topic[128] = "";
   DynamicJsonDocument doc(2048);
@@ -1743,6 +1745,7 @@ void SomfyShade::publish() {
     this->publish("flipCommands", this->flipCommands, true);
     this->publish("flipPosition", this->flipPosition, true);
     this->publishState();
+    Serial.println("before publishDisco");
     this->publishDisco();
     sockEmit.loop(); // Keep our socket alive.
   }

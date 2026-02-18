@@ -361,9 +361,14 @@ bool MQTTClass::publishBuffer(const char *topic, uint8_t *data, uint16_t len, bo
 }
 bool MQTTClass::publishDisco(const char *topic, JsonObject &obj, bool retain) {
   serializeJson(obj, g_content, sizeof(g_content));
+  Serial.print("[MQTT DISCO] Publishing to topic: ");
+  Serial.println(topic);
+  Serial.print("Payload: ");
+  Serial.println(g_content);  // Affiche le JSON généré
   this->publishBuffer(topic, (uint8_t *)g_content, strlen(g_content), retain);
   return true;
 }
+
 bool MQTTClass::publish(const char *topic, int8_t val, bool retain) {
   snprintf(g_content, sizeof(g_content), "%d", val);
   return this->publish(topic, g_content, retain);

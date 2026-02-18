@@ -639,7 +639,7 @@ void SomfyShadeController::writeBackup() {
   file.end();
 }
 
-Fan *SomfyShadeController::addFan(const char *name, uint32_t fanAddress) {
+Fan *SomfyShadeController::addFan(const char *name) {
   for (uint8_t i = 0; i < SOMFY_MAX_FANS; i++) {
     if (fans[i].id == 0) {  // Trouve un emplacement libre
       fans[i].id = i + 1;

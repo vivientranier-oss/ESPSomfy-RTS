@@ -539,7 +539,7 @@ class SomfyShadeController {
     uint32_t lastCommit = 0;
     Fan fans[SOMFY_MAX_FANS];  // Tableau de fans
   public:
-    Fan *addFan(const char *name, uint32_t address);
+    Fan *addFan(const char *name);
     Fan *getFanById(uint8_t fanId);
     void publishFans();
     void sendFanCommand(uint8_t fanId, const char *command);

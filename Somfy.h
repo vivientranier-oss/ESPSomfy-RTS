@@ -537,11 +537,11 @@ class SomfyShadeController {
   protected:
     uint8_t m_shadeIds[SOMFY_MAX_SHADES];
     uint32_t lastCommit = 0;
-    Fan fans[SOMFY_MAX_FANS];  // Tableau de fans
+    Fan extracteurCuisine;
   public:
-    Fan *addFan(const char *name);
+    void setupFan(const char *name);
     Fan *getFanById(uint8_t fanId);
-    void publishFans();
+    void publishFanDiscovery();
     void sendFanCommand(uint8_t fanId, const char *command);
     bool useNVS();
     bool isDirty = false;

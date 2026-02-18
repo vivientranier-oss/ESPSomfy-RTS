@@ -639,16 +639,10 @@ void SomfyShadeController::writeBackup() {
   file.end();
 }
 
-Fan *SomfyShadeController::addFan(const char *name) {
-  Serial.println("SomfyShadeController::addFan");
-  for (uint8_t i = 0; i < SOMFY_MAX_FANS; i++) {
-    if (fans[i].id == 0) {  // Trouve un emplacement libre
-      fans[i].id = i + 1;
-      strncpy(fans[i].name, name, sizeof(fans[i].name));
-      return &fans[i];
-    }
-  }
-  return nullptr;  // Plus de place
+void SomfyShadeController::setupFan(const char *name) {
+  Serial.println("SomfyShadeController::setupFan");
+  strncpy(extracteurCuisine.name, name, sizeof(extracteurCuisine.name));
+  extracteurCuisine.id = 1; // ID fixe
 }
 
 Fan *SomfyShadeController::getFanById(uint8_t fanId) {
@@ -661,69 +655,53 @@ Fan *SomfyShadeController::getFanById(uint8_t fanId) {
 }
 
 bool Fan::publishDiscovery() {
+    if(!mqtt.connected() || !settings.MQTT.pubDisco) return false;
 
-  if(!mqtt.connected() || !settings.MQTT.pubDisco) return false;
+    char topic[128];
+    DynamicJsonDocument doc(512);
+    JsonObject obj = doc.to<JsonObject>();
 
-  char topic[128] = "";
-  DynamicJsonDocument doc(512);
-  JsonObject obj = doc.to<JsonObject>();
+    // Topic de base pour le fan
+    snprintf(topic, sizeof(topic), "%s/fan/extracteur_cuisine", settings.MQTT.rootTopic);
+    obj["~"] = topic;
 
-  // Root topic (~)
-  snprintf(topic, sizeof(topic), "%s/fan/%d",
-           settings.MQTT.rootTopic, this->id);
-  obj["~"] = topic;
+    // Topic de disponibilité
+    snprintf(topic, sizeof(topic), "%s/status", settings.MQTT.rootTopic);
+    obj["availability_topic"] = topic;
+    obj["payload_available"] = "online";
+    obj["payload_not_available"] = "offline";
 
-  // Availability
-  snprintf(topic, sizeof(topic), "%s/status",
-           settings.MQTT.rootTopic);
-  obj["availability_topic"] = topic;
-  obj["payload_available"] = "online";
-  obj["payload_not_available"] = "offline";
+    // Nom et identifiant unique
+    obj["name"] = this->name;
+    snprintf(topic, sizeof(topic), "mqtt_%s_fan_extracteur", settings.serverId);
+    obj["unique_id"] = topic;
 
-  // Name
-  obj["name"] = this->name;
+    // Topic de commande
+    obj["command_topic"] = "~/set";
 
-  // Unique ID
-  snprintf(topic, sizeof(topic),
-           "mqtt_%s_fan%d",
-           settings.serverId,
-           this->id);
-  obj["unique_id"] = topic;
+    // Commandes disponibles
+    obj["payload_off"] = "OFF";
+    JsonArray speeds = obj.createNestedArray("speeds");
+    speeds.add("off");
+    speeds.add("+OUT");
+    speeds.add("-OUT");
 
-  // Command topic
-  obj["command_topic"] = "~/set";
+    // Informations sur le device
+    JsonObject dobj = obj.createNestedObject("device");
+    dobj["name"] = settings.hostname;
+    dobj["mf"] = "rstrouse";
+    dobj["model"] = "ESPSomfy-RTS MQTT";
+    JsonArray arrids = dobj.createNestedArray("identifiers");
+    snprintf(topic, sizeof(topic), "mqtt_espsomfyrts_%s", settings.serverId);
+    arrids.add(topic);
+    dobj["via_device"] = topic;
 
-  // Payloads
-  obj["payload_off"] = "OFF";
+    // Topic de découverte
+    snprintf(topic, sizeof(topic), "%s/fan/extracteur_cuisine/config", settings.MQTT.discoTopic);
 
-  // Speeds
-  JsonArray speeds = obj.createNestedArray("speeds");
-  speeds.add("off");
-  speeds.add("+OUT");
-  speeds.add("-OUT");
-
-  // Device block
-  JsonObject dobj = obj.createNestedObject("device");
-  dobj["name"] = settings.hostname;
-  dobj["mf"] = "rstrouse";
-  dobj["model"] = "ESPSomfy-RTS MQTT";
-
-  JsonArray arrids = dobj.createNestedArray("identifiers");
-  snprintf(topic, sizeof(topic),
-           "mqtt_espsomfyrts_%s",
-           settings.serverId);
-  arrids.add(topic);
-
-  dobj["via_device"] = topic;
-
-  // Discovery topic
-  snprintf(topic, sizeof(topic),
-           "%s/fan/%d/config",
-           settings.MQTT.discoTopic,
-           this->id);
-
-  return mqtt.publishDisco(topic, obj, true);
+    return mqtt.publishDisco(topic, obj, true);
 }
+
 
 
 
@@ -753,20 +731,14 @@ void Fan::sendCommand(const char *command) {
   somfy.transceiver.config.apply();  // Applique les anciens paramètres
 }
 
-void SomfyShadeController::sendFanCommand(uint8_t fanId, const char *command) {
-  Fan *fan = getFanById(fanId);
-  if (fan) {
-    fan->sendCommand(command);
-  }
+void SomfyShadeController::sendFanCommand(const char *command) {
+  extracteurCuisine.sendCommand(command);
 }
 
-void SomfyShadeController::publishFans() {
-  for (uint8_t i = 0; i < SOMFY_MAX_FANS; i++) {
-    if (fans[i].id != 0) {
-      fans[i].publishDiscovery();
-    }
-  }
+void SomfyShadeController::publishFanDiscovery() {
+    extracteurCuisine.publishDiscovery();
 }
+
 
 SomfyRoom * SomfyShadeController::getRoomById(uint8_t roomId) {
   for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {

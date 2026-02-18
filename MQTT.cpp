@@ -225,8 +225,8 @@ bool MQTTClass::connect() {
         this->publish("firmware", settings.fwVersion.name, true);
         this->publish("serverId", settings.serverId, true);
         this->publish("mac", net.mac.c_str());
-        somfy.publishFans();  // Publie les fans via MQTT Discovery
         somfy.publish();
+        somfy.publishFanDiscovery()
         this->subscribe("shades/+/target/set");
         this->subscribe("shades/+/tiltTarget/set");
         this->subscribe("shades/+/direction/set");
@@ -241,7 +241,10 @@ bool MQTTClass::connect() {
         this->subscribe("groups/+/sunFlag/set");
         this->subscribe("groups/+/sunny/set");
         this->subscribe("groups/+/windy/set");
-        this->subscribe("fan/set");
+        // Dans MQTTClass::connect()
+        char fanCommandTopic[128];
+        snprintf(fanCommandTopic, sizeof(fanCommandTopic), "%s/fan/extracteur_cuisine/set", settings.MQTT.rootTopic);
+        this->subscribe(fanCommandTopic);
         mqttClient.setCallback(MQTTClass::receive);
         Serial.println("MQTT Startup Completed");
         esp_task_wdt_reset();

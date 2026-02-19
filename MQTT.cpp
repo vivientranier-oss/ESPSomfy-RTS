@@ -226,7 +226,6 @@ bool MQTTClass::connect() {
         this->publish("serverId", settings.serverId, true);
         this->publish("mac", net.mac.c_str());
         somfy.publish();
-        somfy.publishFanDiscovery();
         this->subscribe("shades/+/target/set");
         this->subscribe("shades/+/tiltTarget/set");
         this->subscribe("shades/+/direction/set");

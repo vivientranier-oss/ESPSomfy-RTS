@@ -646,91 +646,6 @@ void SomfyShadeController::setupFan(const char *name) {
 }
 
 
-bool Fan::publishDiscovery() {
-    if(!mqtt.connected() || !settings.MQTT.pubDisco) return false;
-
-    char topic[128];
-    DynamicJsonDocument doc(512);
-    JsonObject obj = doc.to<JsonObject>();
-
-    // Topic de base pour le fan
-    snprintf(topic, sizeof(topic), "%s/fan/extracteur_cuisine", settings.MQTT.rootTopic);
-    obj["~"] = topic;
-
-    // Topic de disponibilité
-    snprintf(topic, sizeof(topic), "%s/status", settings.MQTT.rootTopic);
-    obj["availability_topic"] = topic;
-    obj["payload_available"] = "online";
-    obj["payload_not_available"] = "offline";
-
-    // Nom et identifiant unique
-    obj["name"] = this->name;
-    snprintf(topic, sizeof(topic), "mqtt_%s_fan_extracteur", settings.serverId);
-    obj["unique_id"] = topic;
-
-    // Topic de commande
-    obj["command_topic"] = "~/set";
-
-    // Commandes disponibles
-    obj["payload_off"] = "OFF";
-    JsonArray speeds = obj.createNestedArray("speeds");
-    speeds.add("off");
-    speeds.add("+OUT");
-    speeds.add("-OUT");
-
-    // Informations sur le device
-    JsonObject dobj = obj.createNestedObject("device");
-    dobj["name"] = settings.hostname;
-    dobj["mf"] = "rstrouse";
-    dobj["model"] = "ESPSomfy-RTS MQTT";
-    JsonArray arrids = dobj.createNestedArray("identifiers");
-    snprintf(topic, sizeof(topic), "mqtt_espsomfyrts_%s", settings.serverId);
-    arrids.add(topic);
-    dobj["via_device"] = topic;
-
-    // Topic de découverte
-    snprintf(topic, sizeof(topic), "%s/fan/extracteur_cuisine/config", settings.MQTT.discoTopic);
-
-    return mqtt.publishDisco(topic, obj, true);
-}
-
-
-
-
-void Fan::sendCommand(const char *command) {
-  // Sauvegarde les paramètres actuels du transceiver
-  float oldFrequency = somfy.transceiver.config.frequency;
-  uint8_t oldBitLength = somfy.transceiver.config.type;  // 56 ou 80 bits
-
-  // Configure le transceiver pour le fan
-  somfy.transceiver.config.frequency = 433.92;
-  somfy.transceiver.config.type = 24;  // 24 bits pour le fan
-  somfy.transceiver.config.apply();  // applique de nouveau parametres
-
-  // Envoie la commande
-  if (strcmp(command, "OFF") == 0) {
-    somfy.transceiver.fanOff();
-  }
-  else if (strcmp(command, "+OUT") == 0) {
-    somfy.transceiver.fanPlusOut();
-  }
-  else if (strcmp(command, "-OUT") == 0) {
-    somfy.transceiver.fanMinusOut();
-  }
-
-  // Restaure les paramètres d'origine
-  somfy.transceiver.config.frequency = oldFrequency;
-  somfy.transceiver.config.type = oldBitLength;
-  somfy.transceiver.config.apply();  // Applique les anciens paramètres
-}
-
-void SomfyShadeController::sendFanCommand(const char *command) {
-  extracteurCuisine.sendCommand(command);
-}
-
-void SomfyShadeController::publishFanDiscovery() {
-    extracteurCuisine.publishDiscovery();
-}
 
 
 SomfyRoom * SomfyShadeController::getRoomById(uint8_t roomId) {
@@ -3838,6 +3753,20 @@ uint32_t SomfyShadeController::getNextRemoteAddress(uint8_t id) {
   i = 0;
   return address;
 }
+
+SomfyShade* SomfyShadeController::addFanAsShade(const char* name) {
+    // Crée un "shade" avec des paramètres adaptés au ventilateur
+    SomfyShade* fanShade = this->addShade();  // Utilise la méthode existante
+    if (fanShade) {
+        strncpy(fanShade->name, name, sizeof(fanShade->name));
+        fanShade->shadeType = shade_types::garage1;  // Type arbitraire (ex: garage1 pour éviter les conflits)
+        fanShade->remoteAddress = 0xFFFFFF;  // Adresse RF fictive (à adapter)
+        fanShade->bitLength = 24;  // Longueur de trame pour le ventilateur
+        fanShade->save();  // Sauvegarde la configuration
+    }
+    return fanShade;
+}
+
 SomfyShade *SomfyShadeController::addShade(JsonObject &obj) {
   SomfyShade *shade = this->addShade();
   if(shade) {
@@ -4029,54 +3958,65 @@ void SomfyRemote::sendSensorCommand(int8_t isWindy, int8_t isSunny, uint8_t repe
   somfy.processFrame(this->lastFrame, true);
 }
 void SomfyRemote::sendCommand(somfy_commands cmd) { this->sendCommand(cmd, this->repeats); }
-void SomfyRemote::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSize) {
-  this->lastFrame.rollingCode = this->getNextRollingCode();
-  this->lastFrame.remoteAddress = this->getRemoteAddress();
-  this->lastFrame.cmd = this->transformCommand(cmd);
-  this->lastFrame.repeats = repeat;
-  this->lastFrame.bitLength = this->bitLength;
-  this->lastFrame.stepSize = stepSize;
-  this->lastFrame.valid = true;
-  // Match the encKey to the rolling code.  These keys range from 160 to 175.
-  this->lastFrame.encKey = 0xA0 | static_cast<uint8_t>(this->lastFrame.rollingCode & 0x000F);
-  this->lastFrame.proto = this->proto;
-  if(this->lastFrame.bitLength == 0) this->lastFrame.bitLength = bit_length;
-  if(this->lastFrame.rollingCode == 0) Serial.println("ERROR: Setting rcode to 0");
-  this->p_lastRollingCode(this->lastFrame.rollingCode);
-  // We have to set the processed to clear this if we are sending
-  // another command.
-  this->lastFrame.processed = false;
-  if(this->proto == radio_proto::GP_Relay) {
-    Serial.print("CMD:");
-    Serial.print(translateSomfyCommand(this->lastFrame.cmd));
-    Serial.print(" ADDR:");
-    Serial.print(this->lastFrame.remoteAddress);
-    Serial.print(" RCODE:");
-    Serial.print(this->lastFrame.rollingCode);
-    Serial.println(" SETTING GPIO");
-  }
-  else if(this->proto == radio_proto::GP_Remote) {
-    Serial.print("CMD:");
-    Serial.print(translateSomfyCommand(this->lastFrame.cmd));
-    Serial.print(" ADDR:");
-    Serial.print(this->lastFrame.remoteAddress);
-    Serial.print(" RCODE:");
-    Serial.print(this->lastFrame.rollingCode);
-    Serial.println(" TRIGGER GPIO");
-    this->triggerGPIOs(this->lastFrame);
-  }
+void SomfyShade::sendCommand(somfy_commands command, uint8_t repeats, uint8_t stepSize) {
+  if (this->shadeType == shade_types::garage1) {  // Ventilateur
+      if (command == somfy_commands::Up) {
+          somfy.transceiver.fanPlusOut();
+      } else if (command == somfy_commands::Down) {
+          somfy.transceiver.fanMinusOut();
+      } else if (command == somfy_commands::My) {
+          somfy.transceiver.fanOff();
+      }
+  } 
   else {
-    Serial.print("CMD:");
-    Serial.print(translateSomfyCommand(this->lastFrame.cmd));
-    Serial.print(" ADDR:");
-    Serial.print(this->lastFrame.remoteAddress);
-    Serial.print(" RCODE:");
-    Serial.print(this->lastFrame.rollingCode);
-    Serial.print(" REPEAT:");
-    Serial.println(repeat);
-    somfy.sendFrame(this->lastFrame, repeat);
+    this->lastFrame.rollingCode = this->getNextRollingCode();
+    this->lastFrame.remoteAddress = this->getRemoteAddress();
+    this->lastFrame.cmd = this->transformCommand(cmd);
+    this->lastFrame.repeats = repeat;
+    this->lastFrame.bitLength = this->bitLength;
+    this->lastFrame.stepSize = stepSize;
+    this->lastFrame.valid = true;
+    // Match the encKey to the rolling code.  These keys range from 160 to 175.
+    this->lastFrame.encKey = 0xA0 | static_cast<uint8_t>(this->lastFrame.rollingCode & 0x000F);
+    this->lastFrame.proto = this->proto;
+    if(this->lastFrame.bitLength == 0) this->lastFrame.bitLength = bit_length;
+    if(this->lastFrame.rollingCode == 0) Serial.println("ERROR: Setting rcode to 0");
+    this->p_lastRollingCode(this->lastFrame.rollingCode);
+    // We have to set the processed to clear this if we are sending
+    // another command.
+    this->lastFrame.processed = false;
+    if(this->proto == radio_proto::GP_Relay) {
+      Serial.print("CMD:");
+      Serial.print(translateSomfyCommand(this->lastFrame.cmd));
+      Serial.print(" ADDR:");
+      Serial.print(this->lastFrame.remoteAddress);
+      Serial.print(" RCODE:");
+      Serial.print(this->lastFrame.rollingCode);
+      Serial.println(" SETTING GPIO");
+    }
+    else if(this->proto == radio_proto::GP_Remote) {
+      Serial.print("CMD:");
+      Serial.print(translateSomfyCommand(this->lastFrame.cmd));
+      Serial.print(" ADDR:");
+      Serial.print(this->lastFrame.remoteAddress);
+      Serial.print(" RCODE:");
+      Serial.print(this->lastFrame.rollingCode);
+      Serial.println(" TRIGGER GPIO");
+      this->triggerGPIOs(this->lastFrame);
+    }
+    else {
+      Serial.print("CMD:");
+      Serial.print(translateSomfyCommand(this->lastFrame.cmd));
+      Serial.print(" ADDR:");
+      Serial.print(this->lastFrame.remoteAddress);
+      Serial.print(" RCODE:");
+      Serial.print(this->lastFrame.rollingCode);
+      Serial.print(" REPEAT:");
+      Serial.println(repeat);
+      somfy.sendFrame(this->lastFrame, repeat);
+    }
+    somfy.processFrame(this->lastFrame, true);
   }
-  somfy.processFrame(this->lastFrame, true);
 }
 bool SomfyRemote::isLastCommand(somfy_commands cmd) {
   if(this->lastFrame.cmd != cmd || this->lastFrame.rollingCode != this->lastRollingCode) {

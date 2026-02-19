@@ -32,6 +32,7 @@ class Web {
     void handleBackup(WebServer &server, bool attach = false);
     void handleReboot(WebServer &server);
     void handleDeserializationError(WebServer &server, DeserializationError &err);
+    void handleFanCommand(WebServer &server);
     void begin();
     void loop();
     void end();

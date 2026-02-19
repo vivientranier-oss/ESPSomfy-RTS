@@ -3,7 +3,6 @@
 #include "ConfigSettings.h"
 #include "WResp.h"
 
-#define SOMFY_MAX_FANS 4
 #define SOMFY_MAX_SHADES 32
 #define SOMFY_MAX_GROUPS 16
 #define SOMFY_MAX_LINKED_REMOTES 7
@@ -418,13 +417,6 @@ class SomfyGroup : public SomfyRemote {
     bool publish(const char *topic, uint16_t val, bool retain = false);
     bool publish(const char *topic, bool val, bool retain = false);
 };
-class Fan {
-  public:
-    uint8_t id = 0;
-    char name[21] = "Extracteur";
-    bool publishDiscovery();
-    void sendCommand(const char *command);
-};
 struct transceiver_config_t {
     bool printBuffer = false;
     bool enabled = false;
@@ -539,9 +531,7 @@ class SomfyShadeController {
     uint32_t lastCommit = 0;
     Fan extracteurCuisine;
   public:
-    void setupFan(const char *name);
-    void publishFanDiscovery();
-    void sendFanCommand(const char *command);
+    SomfyShade* addFanAsShade(const char* name);
     bool useNVS();
     bool isDirty = false;
     uint32_t startingAddress;

@@ -1055,6 +1055,53 @@ void Web::handleReboot(WebServer &server) {
     server.send(201, _encoding_json, "{\"status\":\"ERROR\",\"desc\":\"Invalid HTTP Method: \"}");
   }
 }
+void Web::handleFanCommand(WebServer &server) {
+  webServer.sendCORSHeaders(server);
+  if (server.method() == HTTP_OPTIONS) { server.send(200, "OK"); return; }
+
+  HTTPMethod method = server.method();
+  if (method == HTTP_GET || method == HTTP_PUT || method == HTTP_POST) {
+    String command;
+    if (server.hasArg("command")) {
+      command = server.arg("command");
+    } else if (server.hasArg("plain")) {
+      DynamicJsonDocument doc(256);
+      DeserializationError err = deserializeJson(doc, server.arg("plain"));
+      if (err) {
+        this->handleDeserializationError(server, err);
+        return;
+      } else {
+        JsonObject obj = doc.as<JsonObject>();
+        if (obj.containsKey("command")) {
+          command = obj["command"].as<String>();
+        } else {
+          server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"No command supplied.\"}"));
+          return;
+        }
+      }
+    } else {
+      server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"No command object supplied.\"}"));
+      return;
+    }
+
+    // Envoie la commande au fan
+    Serial.print("Commande REST reçue pour le fan: ");
+    Serial.println(command);
+    somfy.sendFanCommand(command.c_str());
+
+    // Répond avec succès
+    JsonResponse resp;
+    resp.beginResponse(&server, g_content, sizeof(g_content));
+    resp.beginObject();
+    resp.addElem("status", "SUCCESS");
+    resp.addElem("command", command);
+    resp.endObject();
+    resp.endResponse();
+  } else {
+    server.send(500, _encoding_json, F("{\"status\":\"ERROR\",\"desc\":\"Invalid Http method\"}"));
+  }
+}
+
 void Web::begin() {
   Serial.println("Creating Web MicroServices...");
   server.enableCORS(true);
@@ -1082,7 +1129,7 @@ void Web::begin() {
   apiServer.on("/downloadFirmware", []() { webServer.handleDownloadFirmware(apiServer); });
   apiServer.on("/backup", []() { webServer.handleBackup(apiServer); });
   apiServer.on("/reboot", []() { webServer.handleReboot(apiServer); });
-  
+  server.on("/fanCommand", []() { webServer.handleFanCommand(server); });
   // Web Interface
   server.on("/tiltCommand", []() { webServer.handleTiltCommand(server); });
   server.on("/repeatCommand", []() { webServer.handleRepeatCommand(server); });

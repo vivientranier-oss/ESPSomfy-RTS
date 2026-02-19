@@ -2893,7 +2893,7 @@ void SomfyShade::moveToMyPosition() {
     SomfyRemote::sendCommand(somfy_commands::My, this->repeats);
 }
 void SomfyShade::sendCommand(somfy_commands cmd) { this->sendCommand(cmd, this->repeats); }
-void SomfyShade::sendCommand(somfy_commands command, uint8_t repeats, uint8_t stepSize) {
+void SomfyShade::sendCommand(somfy_commands command, uint8_t repeat, uint8_t stepSize) {
   if (this->shadeType == shade_types::garage1) {  // Cas spécial pour le ventilateur
       if (command == somfy_commands::Up) {
           somfy.transceiver.fanPlusOut();  // Commande "+OUT"

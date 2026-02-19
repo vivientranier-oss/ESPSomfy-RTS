@@ -3779,7 +3779,7 @@ SomfyShade* SomfyShadeController::addFanAsShade(const char* name) {
     if (fanShade) {
         strncpy(fanShade->name, name, sizeof(fanShade->name));
         fanShade->shadeType = shade_types::garage1;  // Type arbitraire (ex: garage1 pour éviter les conflits)
-        fanShade->m_remoteAddress = 0xFFFFFFFF;
+        fanShade->setRemoteAddress(0xFFFFFFFF);
         fanShade->bitLength = 24;  // Longueur de trame pour le ventilateur
         fanShade->save();  // Sauvegarde la configuration
     }

@@ -2895,6 +2895,15 @@ void SomfyShade::moveToMyPosition() {
 void SomfyShade::sendCommand(somfy_commands cmd) { this->sendCommand(cmd, this->repeats); }
 void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSize) {
   if (this->shadeType == shade_types::garage1) {  // Cas spécial pour le ventilateur
+
+      // Sauvegarde les paramètres actuels du transceiver
+      float oldFrequency = transceiver.config.frequency;
+      uint8_t oldBitLength = transceiver.config.type;
+
+      // Configure le transceiver pour le fan
+      somfy.transceiver.config.frequency = 433.92;  // Fréquence du fan
+      somfy.transceiver.config.type = 24;           // Type de trame
+      somfy.transceiver.config.apply();
       if (cmd == somfy_commands::Up) {
           somfy.transceiver.fanPlusOut();  // Commande "+OUT"
       } else if (cmd == somfy_commands::Down) {
@@ -2902,6 +2911,11 @@ void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
       } else if (cmd == somfy_commands::My) {
           somfy.transceiver.fanOff();  // Commande "OFF"
       }
+
+      // Restaure les paramètres d'origine
+      somfy.transceiver.config.frequency = oldFrequency;
+      somfy.transceiver.config.type = oldBitLength;
+      somfy.transceiver.config.apply();
   } 
   else {
     // This sendCommand function will always be called externally. sendCommand at the remote level
@@ -3765,6 +3779,7 @@ SomfyShade* SomfyShadeController::addFanAsShade(const char* name) {
     if (fanShade) {
         strncpy(fanShade->name, name, sizeof(fanShade->name));
         fanShade->shadeType = shade_types::garage1;  // Type arbitraire (ex: garage1 pour éviter les conflits)
+        fanShade->m_remoteAddress = 0xFFFFFFFF;
         fanShade->bitLength = 24;  // Longueur de trame pour le ventilateur
         fanShade->save();  // Sauvegarde la configuration
     }

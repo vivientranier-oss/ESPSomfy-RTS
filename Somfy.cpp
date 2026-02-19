@@ -639,13 +639,6 @@ void SomfyShadeController::writeBackup() {
   file.end();
 }
 
-void SomfyShadeController::setupFan(const char *name) {
-  Serial.println("SomfyShadeController::setupFan");
-  strncpy(extracteurCuisine.name, name, sizeof(extracteurCuisine.name));
-  extracteurCuisine.id = 1; // ID fixe
-}
-
-
 
 
 SomfyRoom * SomfyShadeController::getRoomById(uint8_t roomId) {
@@ -3760,7 +3753,6 @@ SomfyShade* SomfyShadeController::addFanAsShade(const char* name) {
     if (fanShade) {
         strncpy(fanShade->name, name, sizeof(fanShade->name));
         fanShade->shadeType = shade_types::garage1;  // Type arbitraire (ex: garage1 pour éviter les conflits)
-        fanShade->remoteAddress = 0xFFFFFF;  // Adresse RF fictive (à adapter)
         fanShade->bitLength = 24;  // Longueur de trame pour le ventilateur
         fanShade->save();  // Sauvegarde la configuration
     }

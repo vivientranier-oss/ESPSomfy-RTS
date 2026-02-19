@@ -1087,7 +1087,6 @@ void Web::handleFanCommand(WebServer &server) {
     // Envoie la commande au fan
     Serial.print("Commande REST reçue pour le fan: ");
     Serial.println(command);
-    somfy.sendFanCommand(command.c_str());
 
     // Répond avec succès
     JsonResponse resp;

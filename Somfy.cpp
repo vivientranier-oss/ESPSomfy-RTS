@@ -2893,71 +2893,83 @@ void SomfyShade::moveToMyPosition() {
     SomfyRemote::sendCommand(somfy_commands::My, this->repeats);
 }
 void SomfyShade::sendCommand(somfy_commands cmd) { this->sendCommand(cmd, this->repeats); }
-void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSize) {
-  // This sendCommand function will always be called externally. sendCommand at the remote level
-  // is expected to be called internally when the motor needs commanded.
-  if(this->bitLength == 0) this->bitLength = somfy.transceiver.config.type;
-  if(cmd == somfy_commands::Up) {
-    if(this->tiltType == tilt_types::euromode) {
-      // In euromode we need to long press for 2 seconds on the
-      // up command.
-      SomfyRemote::sendCommand(cmd, TILT_REPEATS);
-      this->p_target(0.0f);     
-    }
-    else {
-      SomfyRemote::sendCommand(cmd, repeat);
-      if(this->tiltType == tilt_types::tiltonly) {
-        this->p_target(100.0f);
-        this->p_tiltTarget(0.0f);
-        this->p_currentPos(100.0f);
+void SomfyShade::sendCommand(somfy_commands command, uint8_t repeats, uint8_t stepSize) {
+  if (this->shadeType == shade_types::garage1) {  // Cas spécial pour le ventilateur
+      if (command == somfy_commands::Up) {
+          somfy.transceiver.fanPlusOut();  // Commande "+OUT"
+      } else if (command == somfy_commands::Down) {
+          somfy.transceiver.fanMinusOut();  // Commande "-OUT"
+      } else if (command == somfy_commands::My) {
+          somfy.transceiver.fanOff();  // Commande "OFF"
       }
-      else this->p_target(0.0f);
-      if(this->tiltType == tilt_types::integrated) this->p_tiltTarget(0.0f);
-    }
-  }
-  else if(cmd == somfy_commands::Down) {
-    if(this->tiltType == tilt_types::euromode) {
-      // In euromode we need to long press for 2 seconds on the
-      // down command.
-      SomfyRemote::sendCommand(cmd, TILT_REPEATS);
-      this->p_target(100.0f);     
-    }
-    else {
-      SomfyRemote::sendCommand(cmd, repeat);
-      if(this->tiltType == tilt_types::tiltonly) {
-        this->p_target(100.0f);
-        this->p_tiltTarget(100.0f);
-        this->p_currentPos(100.0f);
-      }
-      else this->p_target(100.0f);
-      if(this->tiltType == tilt_types::integrated) this->p_tiltTarget(100.0f);
-    }
-  }
-  else if(cmd == somfy_commands::My) {
-    if(this->isToggle() || this->shadeType == shade_types::drycontact)
-      SomfyRemote::sendCommand(cmd, repeat);
-    else if(this->shadeType == shade_types::drycontact2) return;   
-    else if(this->isIdle()) {
-      this->moveToMyPosition();      
-      return;
-    }
-    else {
-      SomfyRemote::sendCommand(cmd, repeat);
-      if(this->tiltType != tilt_types::tiltonly) this->p_target(this->currentPos);
-      this->p_tiltTarget(this->currentTiltPos);
-    }
-  }
-  else if(cmd == somfy_commands::Toggle) {
-    if(this->bitLength != 80) SomfyRemote::sendCommand(somfy_commands::My, repeat, stepSize);
-    else SomfyRemote::sendCommand(somfy_commands::Toggle, repeat);
-  }
-  else if(this->isToggle() && cmd == somfy_commands::Prog) {
-    SomfyRemote::sendCommand(somfy_commands::Toggle, repeat, stepSize);
-  }
+  } 
   else {
-    SomfyRemote::sendCommand(cmd, repeat, stepSize);
+    // This sendCommand function will always be called externally. sendCommand at the remote level
+    // is expected to be called internally when the motor needs commanded.
+    if(this->bitLength == 0) this->bitLength = somfy.transceiver.config.type;
+    if(cmd == somfy_commands::Up) {
+      if(this->tiltType == tilt_types::euromode) {
+        // In euromode we need to long press for 2 seconds on the
+        // up command.
+        SomfyRemote::sendCommand(cmd, TILT_REPEATS);
+        this->p_target(0.0f);     
+      }
+      else {
+        SomfyRemote::sendCommand(cmd, repeat);
+        if(this->tiltType == tilt_types::tiltonly) {
+          this->p_target(100.0f);
+          this->p_tiltTarget(0.0f);
+          this->p_currentPos(100.0f);
+        }
+        else this->p_target(0.0f);
+        if(this->tiltType == tilt_types::integrated) this->p_tiltTarget(0.0f);
+      }
+    }
+    else if(cmd == somfy_commands::Down) {
+      if(this->tiltType == tilt_types::euromode) {
+        // In euromode we need to long press for 2 seconds on the
+        // down command.
+        SomfyRemote::sendCommand(cmd, TILT_REPEATS);
+        this->p_target(100.0f);     
+      }
+      else {
+        SomfyRemote::sendCommand(cmd, repeat);
+        if(this->tiltType == tilt_types::tiltonly) {
+          this->p_target(100.0f);
+          this->p_tiltTarget(100.0f);
+          this->p_currentPos(100.0f);
+        }
+        else this->p_target(100.0f);
+        if(this->tiltType == tilt_types::integrated) this->p_tiltTarget(100.0f);
+      }
+    }
+    else if(cmd == somfy_commands::My) {
+      if(this->isToggle() || this->shadeType == shade_types::drycontact)
+        SomfyRemote::sendCommand(cmd, repeat);
+      else if(this->shadeType == shade_types::drycontact2) return;   
+      else if(this->isIdle()) {
+        this->moveToMyPosition();      
+        return;
+      }
+      else {
+        SomfyRemote::sendCommand(cmd, repeat);
+        if(this->tiltType != tilt_types::tiltonly) this->p_target(this->currentPos);
+        this->p_tiltTarget(this->currentTiltPos);
+      }
+    }
+    else if(cmd == somfy_commands::Toggle) {
+      if(this->bitLength != 80) SomfyRemote::sendCommand(somfy_commands::My, repeat, stepSize);
+      else SomfyRemote::sendCommand(somfy_commands::Toggle, repeat);
+    }
+    else if(this->isToggle() && cmd == somfy_commands::Prog) {
+      SomfyRemote::sendCommand(somfy_commands::Toggle, repeat, stepSize);
+    }
+    else {
+      SomfyRemote::sendCommand(cmd, repeat, stepSize);
+    }
   }
 }
+
 void SomfyGroup::sendCommand(somfy_commands cmd) { this->sendCommand(cmd, this->repeats); }
 void SomfyGroup::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSize) {
   // This sendCommand function will always be called externally. sendCommand at the remote level
@@ -3950,17 +3962,8 @@ void SomfyRemote::sendSensorCommand(int8_t isWindy, int8_t isSunny, uint8_t repe
   somfy.processFrame(this->lastFrame, true);
 }
 void SomfyRemote::sendCommand(somfy_commands cmd) { this->sendCommand(cmd, this->repeats); }
-void SomfyShade::sendCommand(somfy_commands command, uint8_t repeats, uint8_t stepSize) {
-  if (this->shadeType == shade_types::garage1) {  // Ventilateur
-      if (command == somfy_commands::Up) {
-          somfy.transceiver.fanPlusOut();
-      } else if (command == somfy_commands::Down) {
-          somfy.transceiver.fanMinusOut();
-      } else if (command == somfy_commands::My) {
-          somfy.transceiver.fanOff();
-      }
-  } 
-  else {
+void SomfyRemote::sendCommand(somfy_commands command, uint8_t repeats, uint8_t stepSize) {
+
     this->lastFrame.rollingCode = this->getNextRollingCode();
     this->lastFrame.remoteAddress = this->getRemoteAddress();
     this->lastFrame.cmd = this->transformCommand(cmd);
@@ -4008,7 +4011,6 @@ void SomfyShade::sendCommand(somfy_commands command, uint8_t repeats, uint8_t st
       somfy.sendFrame(this->lastFrame, repeat);
     }
     somfy.processFrame(this->lastFrame, true);
-  }
 }
 bool SomfyRemote::isLastCommand(somfy_commands cmd) {
   if(this->lastFrame.cmd != cmd || this->lastFrame.rollingCode != this->lastRollingCode) {

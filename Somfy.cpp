@@ -3962,7 +3962,7 @@ void SomfyRemote::sendSensorCommand(int8_t isWindy, int8_t isSunny, uint8_t repe
   somfy.processFrame(this->lastFrame, true);
 }
 void SomfyRemote::sendCommand(somfy_commands cmd) { this->sendCommand(cmd, this->repeats); }
-void SomfyRemote::sendCommand(somfy_commands command, uint8_t repeats, uint8_t stepSize) {
+void SomfyRemote::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSize) {
 
     this->lastFrame.rollingCode = this->getNextRollingCode();
     this->lastFrame.remoteAddress = this->getRemoteAddress();

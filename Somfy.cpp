@@ -2897,8 +2897,8 @@ void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
   if (this->shadeType == shade_types::garage1) {  // Cas spécial pour le ventilateur
 
       // Sauvegarde les paramètres actuels du transceiver
-      float oldFrequency = transceiver.config.frequency;
-      uint8_t oldBitLength = transceiver.config.type;
+      float oldFrequency = somfy.transceiver.config.frequency;
+      uint8_t oldBitLength = somfy.transceiver.config.type;
 
       // Configure le transceiver pour le fan
       somfy.transceiver.config.frequency = 433.92;  // Fréquence du fan

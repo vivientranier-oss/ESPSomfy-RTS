@@ -529,7 +529,6 @@ class SomfyShadeController {
   protected:
     uint8_t m_shadeIds[SOMFY_MAX_SHADES];
     uint32_t lastCommit = 0;
-    Fan extracteurCuisine;
   public:
     SomfyShade* addFanAsShade(const char* name);
     bool useNVS();

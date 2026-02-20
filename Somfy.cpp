@@ -640,6 +640,14 @@ void SomfyShadeController::writeBackup() {
 }
 
 
+bool SomfyShadeController::existsShadeWithName(const char* name) const {
+    for (size_t i = 0; i < this->shadesSize; ++i) {
+        if (strcmp(this->shades[i]->name, name) == 0) {
+            return true; // Un objet avec ce nom existe déjà
+        }
+    }
+    return false; // Aucun objet trouvé avec ce nom
+}
 
 SomfyRoom * SomfyShadeController::getRoomById(uint8_t roomId) {
   for(uint8_t i = 0; i < SOMFY_MAX_ROOMS; i++) {
@@ -653,6 +661,14 @@ SomfyShade * SomfyShadeController::getShadeById(uint8_t shadeId) {
   }
   return nullptr;
 }
+
+SomfyShade * SomfyShadeController::getShadeByName(uint8_t shadeId) {
+  for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
+    if(this->shades[i].getShadeName() == shadeId) return &this->shades[i];
+  }
+  return nullptr;
+}
+
 SomfyGroup * SomfyShadeController::getGroupById(uint8_t groupId) {
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
     if(this->groups[i].getGroupId() == groupId) return &this->groups[i];
@@ -3774,14 +3790,20 @@ uint32_t SomfyShadeController::getNextRemoteAddress(uint8_t id) {
 }
 
 SomfyShade* SomfyShadeController::addFanAsShade(const char* name) {
-    // Crée un "shade" avec des paramètres adaptés au ventilateur
-    SomfyShade* fanShade = this->addShade();  // Utilise la méthode existante
+    // Vérifie d'abord si un objet avec ce nom existe déjà
+    if (this->existsShadeWithName(name)) {
+        return nullptr; // ou retourne l'objet existant si tu préfères
+    }
+
+    // Sinon, crée le nouveau "shade"
+    SomfyShade* fanShade = this->addShade();
     if (fanShade) {
-        strncpy(fanShade->name, name, sizeof(fanShade->name));
-        fanShade->shadeType = shade_types::garage1;  // Type arbitraire (ex: garage1 pour éviter les conflits)
+        strncpy(fanShade->name, name, sizeof(fanShade->name) - 1);
+        fanShade->name[sizeof(fanShade->name) - 1] = '\0'; // Assure la terminaison
+        fanShade->shadeType = shade_types::garage1;
         fanShade->setRemoteAddress(0xFFFFFFFF);
-        fanShade->bitLength = 24;  // Longueur de trame pour le ventilateur
-        fanShade->save();  // Sauvegarde la configuration
+        fanShade->bitLength = 24;
+        fanShade->save();
     }
     return fanShade;
 }

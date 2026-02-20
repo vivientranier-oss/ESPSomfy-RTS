@@ -2887,19 +2887,19 @@ void SomfyShade::moveToMyPosition() {
   this->settingPos = false;
   if(this->simMy()) {
     Serial.print("Moving to simulated favorite\n");
-    this->moveToTarget(this->myPos, this->myTiltPos);
+    this->moveToTarget(this->myPoUPs, this->myTiltPos);
   }
   else
     SomfyRemote::sendCommand(somfy_commands::My, this->repeats);
 }
 void SomfyShade::sendCommand(somfy_commands cmd) { this->sendCommand(cmd, this->repeats); }
 void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSize) {
-  if (this->shadeType == shade_types::garage1) {  // Cas spécial pour le ventilateur
+  if (this->getRemoteAddress() == 0xFFFFFFFF) {  // Cas spécial pour le ventilateur
 
       // Sauvegarde les paramètres actuels du transceiver
       float oldFrequency = somfy.transceiver.config.frequency;
       uint8_t oldBitLength = somfy.transceiver.config.type;
-
+    Serial.println("fan special send cmd");
       // Configure le transceiver pour le fan
       somfy.transceiver.config.frequency = 433.92;  // Fréquence du fan
       somfy.transceiver.config.type = 24;           // Type de trame

@@ -2887,7 +2887,7 @@ void SomfyShade::moveToMyPosition() {
   this->settingPos = false;
   if(this->simMy()) {
     Serial.print("Moving to simulated favorite\n");
-    this->moveToTarget(this->myPoUPs, this->myTiltPos);
+    this->moveToTarget(this->myPos, this->myTiltPos);
   }
   else
     SomfyRemote::sendCommand(somfy_commands::My, this->repeats);

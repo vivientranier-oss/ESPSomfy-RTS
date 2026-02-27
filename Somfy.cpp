@@ -2896,20 +2896,44 @@ void SomfyShade::sendCommand(somfy_commands cmd) { this->sendCommand(cmd, this->
 void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSize) {
   if (this->getRemoteAddress() == 0xFFFFFFFF) {  // Cas spécial pour le ventilateur
 
+      // Trames OK                       
+      const char* FRAME_IN_PLUS       = "0000101101100000000011101111000";  // OK 5B00778
+      const char* FRAME_OUT_MINUS   = "00001011011000000000110011110011"; // OK  5B00679
+      const char* FRAME_OFF           = "00001011011000000000110111110010"; // KO  5B006F9
+      const char* FRAME_ON            = "00001011011000000000101011110101";  //  ? 5B0057A
+      const char* FRAME_IN_MINUS      = "00001011011000000000111111110000"; // => KO
+
+      const char* FRAME_OUT_PLUS      = "00001011011000000000101111110100";  // KO 5B007F8 
+
       // Sauvegarde les paramètres actuels du transceiver
       float oldFrequency = somfy.transceiver.config.frequency;
       uint8_t oldBitLength = somfy.transceiver.config.type;
-    Serial.println("fan special send cmd");
-      // Configure le transceiver pour le fan
-      somfy.transceiver.config.frequency = 433.92;  // Fréquence du fan
-      somfy.transceiver.config.type = 24;           // Type de trame
-      somfy.transceiver.config.apply();
-      if (cmd == somfy_commands::Up) {
-          somfy.transceiver.fanPlusOut();  // Commande "+OUT"
-      } else if (cmd == somfy_commands::Down) {
-          somfy.transceiver.fanMinusOut();  // Commande "-OUT"
-      } else if (cmd == somfy_commands::My) {
-          somfy.transceiver.fanOff();  // Commande "OFF"
+
+
+      // --- CONFIG RF PROPRE ---
+      ELECHOUSE_cc1101.setCCMode(0);       // Pas de packet mode
+      ELECHOUSE_cc1101.setModulation(2);   // ASK/OOK
+      ELECHOUSE_cc1101.setMHZ(433.92);
+      ELECHOUSE_cc1101.setPA(12);
+
+      ELECHOUSE_cc1101.setPktFormat(3);    // Asynchronous serial mode
+      ELECHOUSE_cc1101.setManchester(0);   // PAS de Manchester
+      ELECHOUSE_cc1101.setSyncMode(0);     // PAS de sync
+      ELECHOUSE_cc1101.setCrc(0);
+      ELECHOUSE_cc1101.setAdrChk(0);
+
+      if (cmd == 0x00) {
+          somfy.transceiver.sendFanFrame(FRAME_ON);
+      } else if (cmd == 0x1) {
+          somfy.transceiver.sendFanFrame(FRAME_OFF);
+      } else if (cmd == 0x2) {
+          somfy.transceiver.sendFanFrame(FRAME_OUT_PLUS);  // Commande "OFF"
+      } else if (cmd == 0x3){
+          somfy.transceiver.sendFanFrame(FRAME_OUT_MINUS);  // Commande "+IN"
+      } else if (cmd == 0x4){
+        somfy.transceiver.sendFanFrame(FRAME_IN_PLUS);
+      } else if (cmd == 0x5){
+        somfy.transceiver.sendFanFrame(FRAME_IN_MINUS);
       }
 
       // Restaure les paramètres d'origine
@@ -4429,6 +4453,32 @@ void Transceiver::sendFrame(byte *frame, uint8_t sync, uint8_t bitLength) {
     delayMicroseconds(13717);
   }
 }
+
+void Transceiver::sendFanFrame(byte *frame){
+
+  ELECHOUSE_cc1101.SetTx();            // TX permanent
+  for(int r = 0; r < 5; r++) {
+    for(int i = 0; i < 31; i++) {
+      if(FRAME[i] == '0') {
+        digitalWrite(GDO0_PIN, HIGH);
+        delayMicroseconds(SHORT_ON);
+        digitalWrite(GDO0_PIN, LOW);
+        delayMicroseconds(SHORT_OFF);
+      }
+      else {
+        digitalWrite(GDO0_PIN, HIGH);
+        delayMicroseconds(LONG_ON);
+        digitalWrite(GDO0_PIN, LOW);
+        delayMicroseconds(LONG_OFF);
+      }
+    }
+    delayMicroseconds(10000);
+  }
+  digitalWrite(GDO0_PIN, LOW);
+  ELECHOUSE_cc1101.setSidle();            // TX permanent
+
+}
+
 void RECEIVE_ATTR Transceiver::handleReceive() {
     static unsigned long last_time = 0;
     const long time = micros();
@@ -4772,18 +4822,6 @@ bool Transceiver::end() {
     return true;
 }
 
-void Transceiver::fanOff() {
-    byte frame[3] = { 0xF3, 0xFC, 0x1F };
-    sendFrame(frame, 2, 24);
-}
-void Transceiver::fanPlusOut() {
-    byte frame[3] = { 0xF5, 0xB0, 0x05 };
-    sendFrame(frame, 2, 24);
-}
-void Transceiver::fanMinusOut() {
-    byte frame[3] = { 0xF3, 0xFD, 0x17 };
-    sendFrame(frame, 2, 24);
-}
 void transceiver_config_t::fromJSON(JsonObject& obj) {
     //Serial.print("Deserialize Radio JSON ");
     if(obj.containsKey("type")) this->type = obj["type"];

@@ -524,7 +524,9 @@ class Transceiver {
     void fanOff();
     void fanPlusOut();
     void fanMinusOut();
-};
+    void fanPlusIn();
+    void fanMinusIn();
+    
 class SomfyShadeController {
   protected:
     uint8_t m_shadeIds[SOMFY_MAX_SHADES];

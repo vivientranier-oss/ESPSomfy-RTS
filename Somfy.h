@@ -309,6 +309,7 @@ class SomfyShade : public SomfyRemote {
     void toJSON(JsonResponse &json) override;
     
     char name[21] = "";
+    bool SomfyShadeController::existsShadeWithName(const char* name);
     void setShadeId(uint8_t id) { shadeId = id; }
     uint8_t getShadeId() { return shadeId; }
     uint32_t upTime = 10000;

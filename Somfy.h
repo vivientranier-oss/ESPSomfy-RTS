@@ -309,7 +309,6 @@ class SomfyShade : public SomfyRemote {
     void toJSON(JsonResponse &json) override;
     
     char name[21] = "";
-    bool SomfyShadeController::existsShadeWithName(const char* name);
     void setShadeId(uint8_t id) { shadeId = id; }
     uint8_t getShadeId() { return shadeId; }
     uint32_t upTime = 10000;
@@ -527,7 +526,7 @@ class Transceiver {
     void fanMinusOut();
     void fanPlusIn();
     void fanMinusIn();
-    
+
 class SomfyShadeController {
   protected:
     uint8_t m_shadeIds[SOMFY_MAX_SHADES];
@@ -544,6 +543,8 @@ class SomfyShadeController {
     int8_t getMaxShadeOrder();
     int8_t getMaxGroupOrder();
     uint32_t getNextRemoteAddress(uint8_t shadeId);
+    bool existsShadeWithName(const char* name);
+
     SomfyShadeController();
     Transceiver transceiver;
     SomfyRoom *addRoom();

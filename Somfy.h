@@ -520,6 +520,12 @@ class Transceiver {
     void processFrequencyScan(bool received = false);
     void emitFrequencyScan(uint8_t num = 255);
     bool usesPin(uint8_t pin);
+    // Fan control commands (24-bit raw frames)
+    void fanOff();
+    void fanPlusOut();
+    void fanMinusOut();
+    void fanPlusIn();
+    void fanMinusIn();
 };
 
 class SomfyShadeController {

@@ -520,7 +520,7 @@ class Transceiver {
     void processFrequencyScan(bool received = false);
     void emitFrequencyScan(uint8_t num = 255);
     bool usesPin(uint8_t pin);
-}
+};
 
 class SomfyShadeController {
   protected:

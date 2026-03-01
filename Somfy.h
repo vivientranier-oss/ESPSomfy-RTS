@@ -526,7 +526,7 @@ class Transceiver {
     void fanMinusOut();
     void fanPlusIn();
     void fanMinusIn();
-};
+    void sendFanFrame(byte *frame);
 
 class SomfyShadeController {
   protected:

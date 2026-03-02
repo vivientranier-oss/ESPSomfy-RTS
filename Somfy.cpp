@@ -2938,17 +2938,17 @@ void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
       ELECHOUSE_cc1101.setCrc(0);
       ELECHOUSE_cc1101.setAdrChk(0);
 
-      if (cmd == 0x00) {
+      if (cmd == somfy_commands::Unknown0) {
           somfy.transceiver.sendFanFrame(FRAME_ON);
-      } else if (cmd == 0x1) {
+      } else if (cmd == somfy_commands::My) {
           somfy.transceiver.sendFanFrame(FRAME_OFF);
-      } else if (cmd == 0x2) {
+      } else if (cmd == somfy_commands::Up) {
           somfy.transceiver.sendFanFrame(FRAME_OUT_PLUS);  // Commande "OFF"
-      } else if (cmd == 0x3){
+      } else if (cmd == somfy_commands::MyUp){
           somfy.transceiver.sendFanFrame(FRAME_OUT_MINUS);  // Commande "+IN"
-      } else if (cmd == 0x4){
+      } else if (cmd == somfy_commands::Down){
         somfy.transceiver.sendFanFrame(FRAME_IN_PLUS);
-      } else if (cmd == 0x5){
+      } else if (cmd == somfy_commands::MyDown){
         somfy.transceiver.sendFanFrame(FRAME_IN_MINUS);
       }
 
@@ -4476,7 +4476,7 @@ void Transceiver::sendFrame(byte *frame, uint8_t sync, uint8_t bitLength) {
   }
 }
 
-void Transceiver::sendFanFrame(byte *frame){
+void Transceiver::sendFanFrame(char *frame){
 
   ELECHOUSE_cc1101.SetTx();            // TX permanent
   for(int r = 0; r < 5; r++) {

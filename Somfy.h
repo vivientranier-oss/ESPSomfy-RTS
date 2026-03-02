@@ -526,6 +526,7 @@ class Transceiver {
     void fanMinusOut();
     void fanPlusIn();
     void fanMinusIn();
+    void sendFanFrame(char *frame);
 };
 
 class SomfyShadeController {
@@ -576,6 +577,7 @@ class SomfyShadeController {
     uint8_t shadeCount();
     uint8_t groupCount();
     void updateGroupFlags();
+    SomfyShade * getShadeByName(uint8_t shadeId);
     SomfyShade * getShadeById(uint8_t shadeId);
     SomfyRoom * getRoomById(uint8_t roomId);
     SomfyGroup * getGroupById(uint8_t groupId);

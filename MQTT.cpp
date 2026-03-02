@@ -183,7 +183,6 @@ void MQTTClass::receive(const char *topic, byte*payload, uint32_t length) {
       }
     }
   }
-}
   esp_task_wdt_reset(); // Make sure we do not reboot here.
 }
 bool MQTTClass::connect() {

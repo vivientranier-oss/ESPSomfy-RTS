@@ -3818,7 +3818,7 @@ SomfyShade* SomfyShadeController::addFanAsShade(const char* name) {
         strncpy(fanShade->name, name, sizeof(fanShade->name) - 1);
         fanShade->name[sizeof(fanShade->name) - 1] = '\0'; // Assure la terminaison
         fanShade->shadeType = shade_types::garage1;
-        fanShade->setRemoteAddress(0xFFFFFFFF);
+        fanShade->setRemoteAddress(0x000000FF);
         fanShade->bitLength = 24;
         fanShade->save();
     }

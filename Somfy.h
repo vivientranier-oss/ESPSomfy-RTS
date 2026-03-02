@@ -544,7 +544,7 @@ class SomfyShadeController {
     int8_t getMaxShadeOrder();
     int8_t getMaxGroupOrder();
     uint32_t getNextRemoteAddress(uint8_t shadeId);
-    bool existsShadeWithName(const char* name);
+    bool existsShadeWithName(const char* name) const;
 
     SomfyShadeController();
     Transceiver transceiver;

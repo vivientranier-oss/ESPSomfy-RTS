@@ -183,18 +183,6 @@ void MQTTClass::receive(const char *topic, byte*payload, uint32_t length) {
       }
     }
   }
-  else if(strncmp(entityType, "fan", sizeof(entityType)) == 0) {
-    // On n'utilise pas entityId ici mais tu peux gérer plusieurs fans si tu veux
-    String cmd = String(value);
-    if(cmd == "OFF") {
-        somfy.transceiver.fanOff();
-    }
-    else if(cmd == "+OUT") {
-        somfy.transceiver.fanPlusOut();
-    }
-    else if(cmd == "-OUT") {
-        somfy.transceiver.fanMinusOut();
-    }
 }
   esp_task_wdt_reset(); // Make sure we do not reboot here.
 }
@@ -241,9 +229,6 @@ bool MQTTClass::connect() {
         this->subscribe("groups/+/sunny/set");
         this->subscribe("groups/+/windy/set");
         // Dans MQTTClass::connect()
-        char fanCommandTopic[128];
-        snprintf(fanCommandTopic, sizeof(fanCommandTopic), "%s/fan/extracteur_cuisine/set", settings.MQTT.rootTopic);
-        this->subscribe(fanCommandTopic);
         mqttClient.setCallback(MQTTClass::receive);
         Serial.println("MQTT Startup Completed");
         esp_task_wdt_reset();

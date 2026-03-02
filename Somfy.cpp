@@ -641,8 +641,8 @@ void SomfyShadeController::writeBackup() {
 
 
 bool SomfyShadeController::existsShadeWithName(const char* name) const {
-    for (size_t i = 0; i < this->shadesSize; ++i) {
-        if (strcmp(this->shades[i]->name, name) == 0) {
+    for (size_t i = 0; i < SOMFY_MAX_SHADES; ++i) {
+        if (strcmp(this->shades[i].name, name) == 0) {
             return true; // Un objet avec ce nom existe déjà
         }
     }

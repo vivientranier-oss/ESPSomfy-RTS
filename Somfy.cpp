@@ -662,13 +662,6 @@ SomfyShade * SomfyShadeController::getShadeById(uint8_t shadeId) {
   return nullptr;
 }
 
-SomfyShade * SomfyShadeController::getShadeByName(uint8_t shadeId) {
-  for(uint8_t i = 0; i < SOMFY_MAX_SHADES; i++) {
-    if(this->shades[i].getShadeName() == shadeId) return &this->shades[i];
-  }
-  return nullptr;
-}
-
 SomfyGroup * SomfyShadeController::getGroupById(uint8_t groupId) {
   for(uint8_t i = 0; i < SOMFY_MAX_GROUPS; i++) {
     if(this->groups[i].getGroupId() == groupId) return &this->groups[i];

@@ -576,6 +576,7 @@ class SomfyShadeController {
     uint8_t shadeCount();
     uint8_t groupCount();
     void updateGroupFlags();
+    bool existsShadeWithName(const char* name);
     SomfyShade * getShadeByName(uint8_t shadeId);
     SomfyShade * getShadeById(uint8_t shadeId);
     SomfyRoom * getRoomById(uint8_t roomId);

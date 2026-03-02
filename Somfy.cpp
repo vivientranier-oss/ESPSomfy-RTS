@@ -4476,30 +4476,49 @@ void Transceiver::sendFrame(byte *frame, uint8_t sync, uint8_t bitLength) {
   }
 }
 
-void Transceiver::sendFanFrame(char *frame){
+void Transceiver::sendFanFrame(const char *frame) {
+  if (!this->config.enabled) return;
+  uint32_t pin = 1 << this->config.TXPin; // Remplace par GDO0_PIN si nécessaire
 
-  ELECHOUSE_cc1101.SetTx();            // TX permanent
-  for(int r = 0; r < 5; r++) {
-    for(int i = 0; i < 31; i++) {
-      if(FRAME[i] == '0') {
-        digitalWrite(GDO0_PIN, HIGH);
-        delayMicroseconds(SHORT_ON);
-        digitalWrite(GDO0_PIN, LOW);
-        delayMicroseconds(SHORT_OFF);
-      }
-      else {
-        digitalWrite(GDO0_PIN, HIGH);
-        delayMicroseconds(LONG_ON);
-        digitalWrite(GDO0_PIN, LOW);
-        delayMicroseconds(LONG_OFF);
+  // Configuration initiale (optionnel : wake-up pulse si ton ventilateur en a besoin)
+  // Exemple : wake-up pulse de 10 ms (à ajuster selon ton protocole)
+  // REG_WRITE(GPIO_OUT_W1TS_REG, pin);
+  // delayMicroseconds(10000);
+  // REG_WRITE(GPIO_OUT_W1TC_REG, pin);
+  // delayMicroseconds(5000);
+
+  // Synchronisation logicielle (optionnelle, selon ton protocole)
+  REG_WRITE(GPIO_OUT_W1TS_REG, pin);
+  delayMicroseconds(4850); // Synchronisation initiale (ajustable)
+  REG_WRITE(GPIO_OUT_W1TC_REG, pin);
+  delayMicroseconds(1000); // Petit délai avant la trame
+
+  // Envoi de la trame (33 bits)
+  for (int r = 0; r < 5; r++) {
+    for (int i = 0; i < 33; i++) {
+      if (frame[i] == '0') {
+        // Bit 0 : 400 µs ON, 1220 µs OFF
+        REG_WRITE(GPIO_OUT_W1TS_REG, pin);
+        delayMicroseconds(400);
+        REG_WRITE(GPIO_OUT_W1TC_REG, pin);
+        delayMicroseconds(1220);
+      } else {
+        // Bit 1 : 1220 µs ON, 400 µs OFF
+        REG_WRITE(GPIO_OUT_W1TS_REG, pin);
+        delayMicroseconds(1220);
+        REG_WRITE(GPIO_OUT_W1TC_REG, pin);
+        delayMicroseconds(400);
       }
     }
+    // Gap entre répétitions (10 ms)
     delayMicroseconds(10000);
   }
-  digitalWrite(GDO0_PIN, LOW);
-  ELECHOUSE_cc1101.setSidle();            // TX permanent
 
+  // Fin de trame : éteindre la porteuse
+  REG_WRITE(GPIO_OUT_W1TC_REG, pin);
+  ELECHOUSE_cc1101.setSidle(); // Retour en mode idle
 }
+
 
 void RECEIVE_ATTR Transceiver::handleReceive() {
     static unsigned long last_time = 0;

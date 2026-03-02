@@ -2903,6 +2903,7 @@ void SomfyShade::moveToMyPosition() {
 }
 void SomfyShade::sendCommand(somfy_commands cmd) { this->sendCommand(cmd, this->repeats); }
 void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSize) {
+  Serial.printf("Sending command %d", cmd);
   if (this->getRemoteAddress() == 0x000000FF) {  // Cas spécial pour le ventilateur
       Serial.println("fan command");
       // Trames OK                       

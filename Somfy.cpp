@@ -4473,7 +4473,7 @@ void Transceiver::sendFrame(byte *frame, uint8_t sync, uint8_t bitLength) {
 void Transceiver::sendFanFrame(const char *frame) {
   if (!this->config.enabled) return;
   uint32_t pin = 1 << this->config.TXPin; // Remplace par GDO0_PIN si nécessaire
-
+  ELECHOUSE_cc1101.SetTx();   
   // Configuration initiale (optionnel : wake-up pulse si ton ventilateur en a besoin)
   // Exemple : wake-up pulse de 10 ms (à ajuster selon ton protocole)
   // REG_WRITE(GPIO_OUT_W1TS_REG, pin);

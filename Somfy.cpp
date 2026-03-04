@@ -2932,24 +2932,19 @@ void SomfyShade::sendCommand(somfy_commands cmd, uint8_t repeat, uint8_t stepSiz
       ELECHOUSE_cc1101.setCrc(0);
       ELECHOUSE_cc1101.setAdrChk(0);
 
-      if (cmd == somfy_commands::Unknown0) {
+      if (cmd == somfy_commands::Up) {
           somfy.transceiver.sendFanFrame(FRAME_ON);
-      } else if (cmd == somfy_commands::My) {
+      } else if (cmd == somfy_commands::Down) {
           somfy.transceiver.sendFanFrame(FRAME_OFF);
-      } else if (cmd == somfy_commands::Up) {
+      } else if (cmd == somfy_commands::MyUp) {
           somfy.transceiver.sendFanFrame(FRAME_OUT_PLUS);  // Commande "OFF"
-      } else if (cmd == somfy_commands::MyUp){
-          somfy.transceiver.sendFanFrame(FRAME_OUT_MINUS);  // Commande "+IN"
-      } else if (cmd == somfy_commands::Down){
-        somfy.transceiver.sendFanFrame(FRAME_IN_PLUS);
       } else if (cmd == somfy_commands::MyDown){
+          somfy.transceiver.sendFanFrame(FRAME_OUT_MINUS);  // Commande "+IN"
+      } else if (cmd == somfy_commands::MyUpDown){
+        somfy.transceiver.sendFanFrame(FRAME_IN_PLUS);
+      } else if (cmd == somfy_commands::SunFlag){
         somfy.transceiver.sendFanFrame(FRAME_IN_MINUS);
       }
-
-      // Restaure les paramètres d'origine
-      somfy.transceiver.config.frequency = oldFrequency;
-      somfy.transceiver.config.type = oldBitLength;
-      somfy.transceiver.config.apply();
   } 
   else {
     // This sendCommand function will always be called externally. sendCommand at the remote level
